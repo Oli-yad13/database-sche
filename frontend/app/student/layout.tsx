@@ -7,7 +7,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const studentNavItems = [
   { label: 'Dashboard', href: '/student' },
-  { label: 'Profile', href: '/student/profile' },
 ];
 
 interface StudentAuth {
