@@ -1,0 +1,389 @@
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('Seeding database...');
+
+  // Hash password for all users
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      username: 'admin',
+      email: 'admin@university.edu',
+      passwordHash: hashedPassword,
+      role: 'admin',
+      isActive: true,
+      isVerified: true,
+    },
+  });
+
+  console.log('Created admin user:', admin.username);
+
+  // Create departments
+  const csDept = await prisma.department.upsert({
+    where: { code: 'CS' },
+    update: {},
+    create: {
+      name: 'Computer Science',
+      code: 'CS',
+      building: 'Building A',
+      isActive: true,
+    },
+  });
+
+  const seDept = await prisma.department.upsert({
+    where: { code: 'SE' },
+    update: {},
+    create: {
+      name: 'Software Engineering',
+      code: 'SE',
+      building: 'Building B',
+      isActive: true,
+    },
+  });
+
+  console.log('Created departments:', csDept.code, seDept.code);
+
+  // Create teacher user
+  const teacherUser = await prisma.user.upsert({
+    where: { username: 'prof.smith' },
+    update: {},
+    create: {
+      username: 'prof.smith',
+      email: 'smith@university.edu',
+      passwordHash: hashedPassword,
+      role: 'teacher',
+      isActive: true,
+      isVerified: true,
+    },
+  });
+
+  // Create teacher profile
+  const teacherProfile = await prisma.teacherProfile.upsert({
+    where: { employeeId: 'T2024001' },
+    update: {},
+    create: {
+      userId: teacherUser.id,
+      employeeId: 'T2024001',
+      departmentId: seDept.id,
+      title: 'Professor',
+      specialization: 'Software Architecture',
+      maxCreditHours: 12,
+    },
+  });
+
+  console.log('Created teacher:', teacherUser.username);
+
+  // Create academic year
+  const academicYear = await prisma.academicYear.upsert({
+    where: { name: '2025/2026' },
+    update: {},
+    create: {
+      name: '2025/2026',
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2026-08-31'),
+      isActive: true,
+    },
+  });
+
+  // Create semester
+  const semester = await prisma.semester.upsert({
+    where: {
+      academicYearId_code: {
+        academicYearId: academicYear.id,
+        code: '2025-FALL'
+      }
+    },
+    update: {},
+    create: {
+      academicYearId: academicYear.id,
+      name: 'Fall 2025',
+      code: '2025-FALL',
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2025-12-31'),
+      isActive: true,
+      registrationStart: new Date('2025-08-01'),
+      registrationEnd: new Date('2025-08-31'),
+      addDropDeadline: new Date('2025-09-15'),
+      withdrawDeadline: new Date('2025-11-30'),
+    },
+  });
+
+  console.log('Created semester:', semester.name);
+
+  // Create program
+  const program = await prisma.program.upsert({
+    where: { code: 'BSSE' },
+    update: {},
+    create: {
+      departmentId: seDept.id,
+      name: 'Bachelor of Science in Software Engineering',
+      code: 'BSSE',
+      degreeType: 'Bachelor',
+      durationYears: 4,
+      totalCredits: 120,
+      isActive: true,
+    },
+  });
+
+  console.log('Created program:', program.code);
+
+  // Create student user
+  const studentUser = await prisma.user.upsert({
+    where: { username: 'john.doe' },
+    update: {},
+    create: {
+      username: 'john.doe',
+      email: 'john.doe@university.edu',
+      passwordHash: hashedPassword,
+      role: 'student',
+      isActive: true,
+      isVerified: true,
+    },
+  });
+
+  // Create student profile
+  const studentProfile = await prisma.studentProfile.upsert({
+    where: { studentId: 'SE/2025/001' },
+    update: {},
+    create: {
+      userId: studentUser.id,
+      studentId: 'SE/2025/001',
+      programId: program.id,
+      yearLevel: 1,
+      batch: '2025',
+      entryYear: 2025,
+      expectedGradYear: 2029,
+      academicStatus: 'good_standing',
+    },
+  });
+
+  console.log('Created student:', studentUser.username);
+
+  // Create rooms
+  const rooms = await Promise.all([
+    prisma.room.upsert({
+      where: { name: 'A101' },
+      update: {},
+      create: {
+        name: 'A101',
+        building: 'Building A',
+        floor: 1,
+        capacity: 40,
+        type: 'lecture',
+        hasProjector: true,
+        hasWhiteboard: true,
+        isActive: true,
+      },
+    }),
+    prisma.room.upsert({
+      where: { name: 'B202' },
+      update: {},
+      create: {
+        name: 'B202',
+        building: 'Building B',
+        floor: 2,
+        capacity: 30,
+        type: 'lecture',
+        hasProjector: true,
+        hasWhiteboard: true,
+        isActive: true,
+      },
+    }),
+    prisma.room.upsert({
+      where: { name: 'Lab C101' },
+      update: {},
+      create: {
+        name: 'Lab C101',
+        building: 'Building C',
+        floor: 1,
+        capacity: 25,
+        type: 'lab',
+        hasProjector: true,
+        hasComputers: true,
+        computerCount: 25,
+        hasWhiteboard: true,
+        isActive: true,
+      },
+    }),
+  ]);
+
+  console.log('Created rooms:', rooms.map(r => r.name).join(', '));
+
+  // Create courses
+  const course1 = await prisma.course.upsert({
+    where: { code: 'SE301' },
+    update: {},
+    create: {
+      departmentId: seDept.id,
+      code: 'SE301',
+      name: 'Data Structures',
+      creditHours: 4,
+      description: 'Introduction to data structures and algorithms',
+      level: 300,
+      courseType: 'core',
+      hasLab: false,
+      sessionsPerWeek: 2,
+      sessionDuration: 90,
+      offeredInFall: true,
+      offeredInSpring: true,
+      isActive: true,
+    },
+  });
+
+  const course2 = await prisma.course.upsert({
+    where: { code: 'CS201' },
+    update: {},
+    create: {
+      departmentId: csDept.id,
+      code: 'CS201',
+      name: 'Discrete Mathematics',
+      creditHours: 3,
+      description: 'Mathematical foundations for computer science',
+      level: 200,
+      courseType: 'core',
+      hasLab: false,
+      sessionsPerWeek: 2,
+      sessionDuration: 90,
+      offeredInFall: true,
+      offeredInSpring: true,
+      isActive: true,
+    },
+  });
+
+  const course3 = await prisma.course.upsert({
+    where: { code: 'SE302' },
+    update: {},
+    create: {
+      departmentId: seDept.id,
+      code: 'SE302',
+      name: 'Database Systems',
+      creditHours: 4,
+      description: 'Database design and management',
+      level: 300,
+      courseType: 'core',
+      hasLab: true,
+      sessionsPerWeek: 2,
+      sessionDuration: 90,
+      offeredInFall: true,
+      offeredInSpring: true,
+      isActive: true,
+    },
+  });
+
+  console.log('Created courses:', course1.code, course2.code, course3.code);
+
+  // Create time slots
+  const timeSlots = await Promise.all([
+    prisma.timeSlot.upsert({
+      where: { dayOfWeek_startTime: { dayOfWeek: 'Mon', startTime: new Date('1970-01-01T08:30:00Z') } },
+      update: {},
+      create: {
+        dayOfWeek: 'Mon',
+        startTime: new Date('1970-01-01T08:30:00Z'),
+        endTime: new Date('1970-01-01T10:00:00Z'),
+        slotType: 'regular',
+        isActive: true,
+      },
+    }),
+    prisma.timeSlot.upsert({
+      where: { dayOfWeek_startTime: { dayOfWeek: 'Wed', startTime: new Date('1970-01-01T08:30:00Z') } },
+      update: {},
+      create: {
+        dayOfWeek: 'Wed',
+        startTime: new Date('1970-01-01T08:30:00Z'),
+        endTime: new Date('1970-01-01T10:00:00Z'),
+        slotType: 'regular',
+        isActive: true,
+      },
+    }),
+    prisma.timeSlot.upsert({
+      where: { dayOfWeek_startTime: { dayOfWeek: 'Mon', startTime: new Date('1970-01-01T10:15:00Z') } },
+      update: {},
+      create: {
+        dayOfWeek: 'Mon',
+        startTime: new Date('1970-01-01T10:15:00Z'),
+        endTime: new Date('1970-01-01T11:45:00Z'),
+        slotType: 'regular',
+        isActive: true,
+      },
+    }),
+    prisma.timeSlot.upsert({
+      where: { dayOfWeek_startTime: { dayOfWeek: 'Wed', startTime: new Date('1970-01-01T10:15:00Z') } },
+      update: {},
+      create: {
+        dayOfWeek: 'Wed',
+        startTime: new Date('1970-01-01T10:15:00Z'),
+        endTime: new Date('1970-01-01T11:45:00Z'),
+        slotType: 'regular',
+        isActive: true,
+      },
+    }),
+    prisma.timeSlot.upsert({
+      where: { dayOfWeek_startTime: { dayOfWeek: 'Fri', startTime: new Date('1970-01-01T14:00:00Z') } },
+      update: {},
+      create: {
+        dayOfWeek: 'Fri',
+        startTime: new Date('1970-01-01T14:00:00Z'),
+        endTime: new Date('1970-01-01T15:30:00Z'),
+        slotType: 'regular',
+        isActive: true,
+      },
+    }),
+  ]);
+
+  console.log('Created time slots:', timeSlots.length);
+
+  // Create events/holidays
+  await prisma.event.createMany({
+    data: [
+      {
+        title: 'New Year Holiday',
+        description: 'University closed for New Year',
+        eventType: 'holiday',
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2026-01-01'),
+        isAllDay: true,
+        affectsSchedule: true,
+      },
+      {
+        title: 'Midterm Exams',
+        description: 'Midterm examination period',
+        eventType: 'exam_period',
+        startDate: new Date('2025-11-01'),
+        endDate: new Date('2025-11-15'),
+        isAllDay: true,
+        semesterId: semester.id,
+        affectsSchedule: true,
+      },
+      {
+        title: 'Christmas Break',
+        description: 'Winter break - No classes',
+        eventType: 'break',
+        startDate: new Date('2025-12-20'),
+        endDate: new Date('2026-01-05'),
+        isAllDay: true,
+        affectsSchedule: true,
+      },
+    ],
+  });
+
+  console.log('Created events/holidays');
+
+  console.log('Seeding complete!');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

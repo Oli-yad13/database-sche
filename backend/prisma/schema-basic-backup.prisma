@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique
+  passwordHash   String
+  role           Role
+  firstName      String?
+  lastName       String?
+  email          String?
+  createdAt      DateTime @default(now())
+  
+  // Relations
+  taughtSections Section[] 
+  enrollments    Enrollment[]
+  grades         Grade[]
+}
+
+enum Role {
+  admin
+  teacher
+  student
+}
+
+model Department {
+  id      Int      @id @default(autoincrement())
+  name    String
+  code    String   @unique
+  courses Course[]
+}
+
+model Course {
+  id            Int            @id @default(autoincrement())
+  departmentId  Int
+  department    Department     @relation(fields: [departmentId], references: [id])
+  code          String         @unique
+  name          String
+  creditHours   Int
+  defaultSemester Int?         // 1-8
+  description   String?
+  
+  sections      Section[]
+  grades        Grade[]
+  
+  // Self-relation for prerequisites
+  prerequisites Course[]       @relation("Prerequisites")
+  prerequisiteFor Course[]     @relation("Prerequisites")
+}
+
+model Room {
+  id       Int       @id @default(autoincrement())
+  name     String
+  capacity Int
+  type     String    @default("lecture")
+  sections Section[]
+}
+
+model TimeSlot {
+  id        Int       @id @default(autoincrement())
+  dayOfWeek DayOfWeek
+  startTime DateTime  @db.Time
+  endTime   DateTime  @db.Time
+  sections  Section[]
+
+  @@unique([dayOfWeek, startTime])
+}
+
+enum DayOfWeek {
+  Mon
+  Tue
+  Wed
+  Thu
+  Fri
+  Sat
+  Sun
+}
+
+model Semester {
+  id             Int           @id @default(autoincrement())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  sections       Section[]
+  grades         Grade[]
+}
+
+model Section {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  semesterId  Int
+  semester    Semester @relation(fields: [semesterId], references: [id])
+  teacherId   Int?
+  teacher     User?    @relation(fields: [teacherId], references: [id])
+  
+  name        String   // 'A', 'B'
+  maxCapacity Int
+  
+  roomId      Int?
+  room        Room?     @relation(fields: [roomId], references: [id])
+  timeSlotId  Int?
+  timeSlot    TimeSlot? @relation(fields: [timeSlotId], references: [id])
+
+  enrollments Enrollment[]
+  
+  @@unique([semesterId, courseId, name])
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  sectionId Int
+  section   Section  @relation(fields: [sectionId], references: [id])
+  enrolledAt DateTime @default(now())
+  status    String   @default("enrolled")
+}
+
+model Grade {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  student    User     @relation(fields: [studentId], references: [id])
+  courseId   Int
+  course     Course   @relation(fields: [courseId], references: [id])
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  grade      String
+  passed     Boolean  @default(false)
+}

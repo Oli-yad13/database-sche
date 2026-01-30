@@ -1,0 +1,199 @@
+// Simplified Prisma Schema for University Scheduling System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== AUTHENTICATION ====================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  isVerified   Boolean  @default(false)
+  resetToken   String?
+  resetTokenExpiry DateTime?
+  lastLogin    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens  RefreshToken[]
+  enrollments    Enrollment[]
+  taughtSchedules Schedule[]
+
+  @@index([email])
+  @@index([username])
+}
+
+enum Role {
+  admin
+  teacher
+  student
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ==================== ACADEMIC STRUCTURE ====================
+
+model Department {
+  id                Int       @id @default(autoincrement())
+  code              String    @unique
+  name              String
+  description       String?
+  faculty           String?
+  headOfDepartment  String?
+  headEmail         String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  courses           Course[]
+  sections          Section[]
+
+  @@index([code])
+}
+
+model Course {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique
+  name         String
+  description  String?
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id])
+  creditHours  Int
+  level        Int      // 100, 200, 300, 400
+  hasLab       Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  schedules    Schedule[]
+
+  @@index([departmentId])
+  @@index([level])
+}
+
+model Section {
+  id           Int      @id @default(autoincrement())
+  name         String   // 'A', 'B', 'C'
+  code         String   @unique
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id])
+  yearLevel    Int      // 1, 2, 3, 4
+  capacity     Int
+  advisor      String?
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  enrollments  Enrollment[]
+
+  @@index([departmentId])
+  @@index([yearLevel])
+}
+
+model Room {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  building       String
+  floor          Int
+  capacity       Int
+  type           String   // 'lecture', 'lab', 'seminar', 'auditorium'
+  hasProjector   Boolean  @default(false)
+  hasComputers   Boolean  @default(false)
+  computerCount  Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  schedules      Schedule[]
+
+  @@index([building])
+  @@index([type])
+}
+
+model TimeSlot {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  startTime String   // '08:00'
+  endTime   String   // '09:30'
+  days      String[] // ['Monday', 'Wednesday', 'Friday']
+  duration  Int      // Minutes (calculated)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schedules Schedule[]
+
+  @@index([code])
+}
+
+model Schedule {
+  id         Int      @id @default(autoincrement())
+  sectionId  Int
+  courseId   Int
+  course     Course   @relation(fields: [courseId], references: [id])
+  teacherId  Int?
+  teacher    User?    @relation(fields: [teacherId], references: [id])
+  roomId     Int
+  room       Room     @relation(fields: [roomId], references: [id])
+  timeSlotId Int
+  timeSlot   TimeSlot @relation(fields: [timeSlotId], references: [id])
+  semesterId Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([sectionId, courseId, timeSlotId])
+  @@index([sectionId])
+  @@index([courseId])
+  @@index([roomId])
+  @@index([timeSlotId])
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  sectionId Int
+  section   Section  @relation(fields: [sectionId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, sectionId])
+  @@index([studentId])
+  @@index([sectionId])
+}
+
+model Event {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  eventType       String   // 'holiday', 'break', 'exam_period', etc.
+  startDate       DateTime
+  endDate         DateTime
+  isAllDay        Boolean  @default(false)
+  affectsSchedule Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([startDate])
+  @@index([endDate])
+}

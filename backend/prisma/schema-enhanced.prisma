@@ -1,0 +1,654 @@
+// Enhanced Prisma Schema for University Scheduling System
+// Includes: Academic structure, profiles, sessions, conflicts, and proper auth
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== AUTHENTICATION & USERS ====================
+
+model User {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique
+  email          String   @unique
+  passwordHash   String
+  role           Role
+  isActive       Boolean  @default(true)
+  isVerified     Boolean  @default(false)
+  verificationToken String?
+  resetToken     String?
+  resetTokenExpiry DateTime?
+  lastLogin      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  refreshTokens    RefreshToken[]
+  studentProfile   StudentProfile?
+  teacherProfile   TeacherProfile?
+  auditLogs        AuditLog[]
+
+  // Existing relations
+  taughtSections   Section[]
+  enrollments      Enrollment[]
+  grades           Grade[]
+  createdConflicts Conflict[]
+
+  @@index([email])
+  @@index([username])
+}
+
+enum Role {
+  admin
+  teacher
+  student
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ==================== ACADEMIC STRUCTURE ====================
+
+model AcademicYear {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique  // "2025/2026"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean    @default(false)  // Only one can be active
+  createdAt DateTime   @default(now())
+
+  semesters Semester[]
+
+  @@index([isActive])
+}
+
+model Semester {
+  id             Int          @id @default(autoincrement())
+  academicYearId Int
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  name           String       // "Fall", "Spring", "Summer"
+  code           String       // "2025-1", "2025-2"
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean      @default(false)
+
+  // Registration periods
+  registrationStart DateTime
+  registrationEnd   DateTime
+  addDropDeadline   DateTime
+  withdrawDeadline  DateTime
+
+  sections          Section[]
+  grades            Grade[]
+  scheduleVersions  ScheduleVersion[]
+  enrollmentPeriods EnrollmentPeriod[]
+
+  @@unique([academicYearId, code])
+  @@index([isActive])
+}
+
+model Program {
+  id               Int      @id @default(autoincrement())
+  departmentId     Int
+  department       Department @relation(fields: [departmentId], references: [id])
+  name             String   // "Bachelor of Science in Software Engineering"
+  code             String   @unique  // "BSSE"
+  degreeType       String   // "Bachelor", "Master", "PhD"
+  durationYears    Int      // 4
+  totalCredits     Int      // 120
+  description      String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  students         StudentProfile[]
+  curricula        Curriculum[]
+
+  @@index([departmentId])
+}
+
+model Curriculum {
+  id          Int      @id @default(autoincrement())
+  programId   Int
+  program     Program  @relation(fields: [programId], references: [id])
+  version     String   // "2023", "2024" (curriculum year)
+  isActive    Boolean  @default(true)
+  effectiveFrom DateTime
+
+  requirements CurriculumRequirement[]
+
+  @@unique([programId, version])
+}
+
+model CurriculumRequirement {
+  id           Int        @id @default(autoincrement())
+  curriculumId Int
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id])
+  courseId     Int
+  course       Course     @relation(fields: [courseId], references: [id])
+  yearLevel    Int        // 1, 2, 3, 4
+  semester     Int        // 1 or 2 (Fall or Spring)
+  isCore       Boolean    @default(true)  // Core vs Elective
+
+  @@unique([curriculumId, courseId])
+  @@index([curriculumId, yearLevel, semester])
+}
+
+// ==================== DEPARTMENTS & COURSES ====================
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String   @unique
+  building    String?  // "Building A"
+  headTeacherId Int?   // Department head
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  courses     Course[]
+  programs    Program[]
+  teachers    TeacherProfile[]
+}
+
+model Course {
+  id              Int            @id @default(autoincrement())
+  departmentId    Int
+  department      Department     @relation(fields: [departmentId], references: [id])
+  code            String         @unique
+  name            String
+  creditHours     Int
+  description     String?
+
+  // Course characteristics
+  level           Int            // 100, 200, 300, 400
+  courseType      CourseType     @default(core)
+  hasLab          Boolean        @default(false)
+  hasTutorial     Boolean        @default(false)
+
+  // Scheduling info
+  defaultSemester Int?           // 1-8
+  sessionsPerWeek Int            @default(1)  // How many times course meets per week
+  sessionDuration Int            @default(90) // Minutes per session
+
+  // Offering constraints
+  offeredInFall   Boolean        @default(true)
+  offeredInSpring Boolean        @default(true)
+  offeredInSummer Boolean        @default(false)
+  maxSections     Int            @default(5)
+
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+
+  sections        Section[]
+  courseSessions  CourseSession[]
+  grades          Grade[]
+  curriculumReqs  CurriculumRequirement[]
+
+  // Self-relations for prerequisites
+  prerequisites   Course[]       @relation("Prerequisites")
+  prerequisiteFor Course[]       @relation("Prerequisites")
+
+  // Co-requisites (courses that must be taken together)
+  corequisites    Course[]       @relation("Corequisites")
+  corequisiteFor  Course[]       @relation("Corequisites")
+}
+
+enum CourseType {
+  core
+  elective
+  minor
+  general_education
+  capstone
+}
+
+// ==================== STUDENT & TEACHER PROFILES ====================
+
+model StudentProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  studentId       String   @unique  // University ID like "SE/2023/001"
+  programId       Int
+  program         Program  @relation(fields: [programId], references: [id])
+
+  // Academic info
+  yearLevel       Int      // 1, 2, 3, 4
+  batch           String   // "2023", "2024"
+  entryYear       Int      // 2023
+  expectedGradYear Int     // 2027
+
+  // Academic standing
+  currentGPA      Float?
+  totalCredits    Int      @default(0)
+  academicStatus  AcademicStatus @default(good_standing)
+
+  // Advisor
+  advisorId       Int?
+  advisor         TeacherProfile? @relation(fields: [advisorId], references: [id])
+
+  // Holds
+  hasFinancialHold Boolean @default(false)
+  hasAcademicHold  Boolean @default(false)
+  hasRegistrationHold Boolean @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  waitlistEntries EnrollmentWaitlist[]
+  advisees        StudentProfile[] @relation("StudentAdvisor")
+
+  @@index([programId])
+  @@index([yearLevel])
+  @@index([batch])
+}
+
+enum AcademicStatus {
+  good_standing
+  academic_warning
+  academic_probation
+  academic_suspension
+  honors
+  deans_list
+}
+
+model TeacherProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  employeeId      String   @unique
+  departmentId    Int
+  department      Department @relation(fields: [departmentId], references: [id])
+
+  title           String   // "Professor", "Associate Professor", "Lecturer"
+  specialization  String?
+  officeLocation  String?
+  officeHours     String?  // JSON or separate table
+
+  // Teaching constraints
+  maxCreditHours  Int      @default(12)  // Max teaching load per semester
+  prefersMorning  Boolean  @default(false)
+  prefersAfternoon Boolean @default(false)
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  availability    TeacherAvailability[]
+  advisees        StudentProfile[] @relation("StudentAdvisor")
+
+  @@index([departmentId])
+}
+
+model TeacherAvailability {
+  id        Int            @id @default(autoincrement())
+  teacherId Int
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  dayOfWeek DayOfWeek
+  startTime DateTime       @db.Time
+  endTime   DateTime       @db.Time
+
+  // null = always, otherwise specific semester
+  semesterId Int?
+  semester   Semester?     @relation(fields: [semesterId], references: [id])
+
+  isAvailable Boolean      @default(true)  // false means blocked time
+  reason      String?      // "Research time", "Admin duties"
+
+  @@index([teacherId, semesterId])
+}
+
+// ==================== ROOMS & RESOURCES ====================
+
+model Room {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  building    String?
+  floor       Int?
+  capacity    Int
+  type        RoomType @default(lecture)
+
+  // Equipment
+  hasProjector    Boolean @default(true)
+  hasComputers    Boolean @default(false)
+  computerCount   Int?
+  hasWhiteboard   Boolean @default(true)
+  hasAirConditioning Boolean @default(false)
+
+  // Accessibility
+  isAccessible Boolean @default(false)
+
+  isActive    Boolean @default(true)
+  notes       String?
+
+  sections    Section[]
+  unavailability RoomUnavailability[]
+
+  @@index([type])
+  @@index([capacity])
+}
+
+enum RoomType {
+  lecture
+  lab
+  seminar
+  auditorium
+  exam_hall
+  conference
+}
+
+model RoomUnavailability {
+  id        Int      @id @default(autoincrement())
+  roomId    Int
+  room      Room     @relation(fields: [roomId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  reason    String   // "Maintenance", "Renovation", "Event"
+
+  @@index([roomId, startDate, endDate])
+}
+
+// ==================== TIME MANAGEMENT ====================
+
+model TimeSlot {
+  id        Int       @id @default(autoincrement())
+  dayOfWeek DayOfWeek
+  startTime DateTime  @db.Time
+  endTime   DateTime  @db.Time
+
+  slotType  SlotType  @default(regular)
+  isActive  Boolean   @default(true)
+
+  courseSessions CourseSession[]
+
+  @@unique([dayOfWeek, startTime])
+  @@index([dayOfWeek])
+}
+
+enum DayOfWeek {
+  Mon
+  Tue
+  Wed
+  Thu
+  Fri
+  Sat
+  Sun
+}
+
+enum SlotType {
+  regular
+  evening
+  weekend
+  online
+}
+
+// ==================== SECTIONS & SESSIONS ====================
+
+model Section {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  semesterId  Int
+  semester    Semester @relation(fields: [semesterId], references: [id])
+  teacherId   Int?
+  teacher     User?    @relation(fields: [teacherId], references: [id])
+
+  name        String   // 'A', 'B', 'C'
+  maxCapacity Int
+  currentEnrollment Int @default(0)
+
+  // Section status
+  status      SectionStatus @default(draft)
+
+  // Default room/time (can be overridden by CourseSession)
+  roomId      Int?
+  room        Room?     @relation(fields: [roomId], references: [id])
+
+  // Multiple sessions per week
+  courseSessions CourseSession[]
+
+  enrollments Enrollment[]
+  waitlist    EnrollmentWaitlist[]
+  conflicts   Conflict[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([semesterId, courseId, name])
+  @@index([semesterId, status])
+}
+
+enum SectionStatus {
+  draft        // Being planned
+  published    // Visible to students
+  open         // Registration open
+  closed       // Registration closed
+  full         // At capacity
+  cancelled    // Cancelled
+}
+
+// Supports multi-session courses (e.g., lecture on Mon/Wed, lab on Fri)
+model CourseSession {
+  id          Int       @id @default(autoincrement())
+  sectionId   Int
+  section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  courseId    Int
+  course      Course    @relation(fields: [courseId], references: [id])
+
+  sessionType SessionType
+
+  timeSlotId  Int
+  timeSlot    TimeSlot  @relation(fields: [timeSlotId], references: [id])
+
+  roomId      Int?
+  room        Room?     @relation(fields: [roomId], references: [id])
+
+  // Override teacher for lab sessions
+  teacherId   Int?
+
+  @@index([sectionId])
+  @@index([timeSlotId])
+}
+
+enum SessionType {
+  lecture
+  lab
+  tutorial
+  seminar
+  online
+}
+
+// ==================== ENROLLMENT ====================
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  sectionId Int
+  section   Section  @relation(fields: [sectionId], references: [id])
+
+  enrolledAt DateTime @default(now())
+  status     EnrollmentStatus @default(enrolled)
+
+  grade      String?  // Final grade
+  gradePoints Float?  // For GPA calculation
+
+  @@unique([studentId, sectionId])
+  @@index([studentId, status])
+  @@index([sectionId])
+}
+
+enum EnrollmentStatus {
+  enrolled
+  dropped
+  withdrawn
+  completed
+  incomplete
+}
+
+model EnrollmentWaitlist {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  sectionId Int
+  section   Section  @relation(fields: [sectionId], references: [id])
+
+  position  Int      // Queue position
+  addedAt   DateTime @default(now())
+  status    WaitlistStatus @default(waiting)
+  notifiedAt DateTime?
+
+  @@unique([studentId, sectionId])
+  @@index([sectionId, status])
+}
+
+enum WaitlistStatus {
+  waiting
+  offered
+  accepted
+  declined
+  expired
+}
+
+model EnrollmentPeriod {
+  id         Int      @id @default(autoincrement())
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
+
+  name       String   // "Senior Registration", "Sophomore Registration"
+  yearLevel  Int?     // null = all levels
+
+  startDate  DateTime
+  endDate    DateTime
+  priority   Int      // Higher = earlier registration
+
+  @@index([semesterId, startDate])
+}
+
+// ==================== GRADES ====================
+
+model Grade {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  student    User     @relation(fields: [studentId], references: [id])
+  courseId   Int
+  course     Course   @relation(fields: [courseId], references: [id])
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
+
+  grade      String   // 'A', 'B+', 'F', 'W', 'I'
+  gradePoints Float   // 4.0, 3.5, 0.0
+  passed     Boolean  @default(false)
+
+  isRetake   Boolean  @default(false)
+  retakeOf   Int?     // ID of previous grade entry
+
+  createdAt  DateTime @default(now())
+
+  @@index([studentId, courseId])
+  @@index([semesterId])
+}
+
+// ==================== SCHEDULING & CONFLICTS ====================
+
+model ScheduleVersion {
+  id          Int      @id @default(autoincrement())
+  semesterId  Int
+  semester    Semester @relation(fields: [semesterId], references: [id])
+
+  version     Int      // 1, 2, 3
+  name        String   // "Draft v1", "Final"
+  status      ScheduleStatus @default(draft)
+
+  createdById Int
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([semesterId, version])
+  @@index([semesterId, status])
+}
+
+enum ScheduleStatus {
+  draft
+  review
+  published
+  archived
+}
+
+model Conflict {
+  id          Int      @id @default(autoincrement())
+  sectionId   Int
+  section     Section  @relation(fields: [sectionId], references: [id])
+
+  conflictType ConflictType
+  description String
+  severity    ConflictSeverity
+
+  resolved    Boolean  @default(false)
+  resolvedBy  Int?
+  resolver    User?    @relation(fields: [resolvedBy], references: [id])
+  resolvedAt  DateTime?
+  resolution  String?
+
+  detectedAt  DateTime @default(now())
+
+  @@index([sectionId, resolved])
+  @@index([conflictType, severity])
+}
+
+enum ConflictType {
+  teacher_conflict    // Teacher teaching two sections at same time
+  room_conflict       // Room double-booked
+  student_conflict    // Students in same program have overlapping sections
+  capacity_exceeded   // More enrollments than room capacity
+  prerequisite_violation
+  teacher_overload    // Exceeds max credit hours
+  room_type_mismatch  // Lab course in lecture room
+}
+
+enum ConflictSeverity {
+  critical   // Must fix
+  high       // Should fix
+  medium     // Nice to fix
+  low        // Informational
+}
+
+// ==================== AUDIT & LOGGING ====================
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  action    String   // "CREATE_SECTION", "ENROLL_STUDENT"
+  entity    String   // "Section", "Enrollment"
+  entityId  Int?
+
+  oldData   Json?
+  newData   Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

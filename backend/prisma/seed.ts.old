@@ -1,0 +1,545 @@
+import 'dotenv/config';
+import { PrismaClient, Role, DayOfWeek } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('🌱 Starting database seeding...\n');
+
+  // Clear existing data (optional - comment out if you want to keep data)
+  console.log('🗑️  Cleaning existing data...');
+  await prisma.grade.deleteMany();
+  await prisma.enrollment.deleteMany();
+  await prisma.section.deleteMany();
+  await prisma.timeSlot.deleteMany();
+  await prisma.room.deleteMany();
+  await prisma.semester.deleteMany();
+  await prisma.course.deleteMany();
+  await prisma.department.deleteMany();
+  await prisma.user.deleteMany();
+  console.log('✅ Cleanup complete\n');
+
+  // 1. Create Users
+  console.log('👥 Creating users...');
+
+  // Admin
+  const admin = await prisma.user.create({
+    data: {
+      username: 'admin',
+      passwordHash: 'hashed_password_here', // TODO: Use bcrypt to hash passwords
+      role: Role.admin,
+      firstName: 'System',
+      lastName: 'Administrator',
+      email: 'admin@university.edu',
+    },
+  });
+
+  // Teachers
+  const teacher1 = await prisma.user.create({
+    data: {
+      username: 'prof.smith',
+      passwordHash: 'hashed_password_here',
+      role: Role.teacher,
+      firstName: 'John',
+      lastName: 'Smith',
+      email: 'john.smith@university.edu',
+    },
+  });
+
+  const teacher2 = await prisma.user.create({
+    data: {
+      username: 'prof.johnson',
+      passwordHash: 'hashed_password_here',
+      role: Role.teacher,
+      firstName: 'Sarah',
+      lastName: 'Johnson',
+      email: 'sarah.johnson@university.edu',
+    },
+  });
+
+  const teacher3 = await prisma.user.create({
+    data: {
+      username: 'prof.williams',
+      passwordHash: 'hashed_password_here',
+      role: Role.teacher,
+      firstName: 'Michael',
+      lastName: 'Williams',
+      email: 'michael.williams@university.edu',
+    },
+  });
+
+  // Students
+  const students = await prisma.user.createMany({
+    data: [
+      {
+        username: 'student001',
+        passwordHash: 'hashed_password_here',
+        role: Role.student,
+        firstName: 'Alice',
+        lastName: 'Brown',
+        email: 'alice.brown@student.university.edu',
+      },
+      {
+        username: 'student002',
+        passwordHash: 'hashed_password_here',
+        role: Role.student,
+        firstName: 'Bob',
+        lastName: 'Davis',
+        email: 'bob.davis@student.university.edu',
+      },
+      {
+        username: 'student003',
+        passwordHash: 'hashed_password_here',
+        role: Role.student,
+        firstName: 'Carol',
+        lastName: 'Miller',
+        email: 'carol.miller@student.university.edu',
+      },
+      {
+        username: 'student004',
+        passwordHash: 'hashed_password_here',
+        role: Role.student,
+        firstName: 'David',
+        lastName: 'Wilson',
+        email: 'david.wilson@student.university.edu',
+      },
+      {
+        username: 'student005',
+        passwordHash: 'hashed_password_here',
+        role: Role.student,
+        firstName: 'Eva',
+        lastName: 'Martinez',
+        email: 'eva.martinez@student.university.edu',
+      },
+    ],
+  });
+
+  console.log(`✅ Created 1 admin, 3 teachers, and ${students.count} students\n`);
+
+  // 2. Create Departments
+  console.log('🏢 Creating departments...');
+
+  const softwareEng = await prisma.department.create({
+    data: {
+      name: 'Software Engineering',
+      code: 'SE',
+    },
+  });
+
+  const computerSci = await prisma.department.create({
+    data: {
+      name: 'Computer Science',
+      code: 'CS',
+    },
+  });
+
+  const informationSys = await prisma.department.create({
+    data: {
+      name: 'Information Systems',
+      code: 'IS',
+    },
+  });
+
+  console.log('✅ Created 3 departments\n');
+
+  // 3. Create Courses
+  console.log('📚 Creating courses...');
+
+  // Software Engineering Courses
+  const se101 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE101',
+      name: 'Introduction to Programming',
+      creditHours: 3,
+      defaultSemester: 1,
+      description: 'Basic programming concepts using Python. Variables, loops, functions, and OOP basics.',
+    },
+  });
+
+  const se102 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE102',
+      name: 'Web Development Fundamentals',
+      creditHours: 3,
+      defaultSemester: 2,
+      description: 'HTML, CSS, JavaScript basics. Building responsive websites.',
+    },
+  });
+
+  const se201 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE201',
+      name: 'Data Structures',
+      creditHours: 4,
+      defaultSemester: 3,
+      description: 'Arrays, linked lists, stacks, queues, trees, graphs, and hash tables.',
+    },
+  });
+
+  const se202 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE202',
+      name: 'Object-Oriented Programming',
+      creditHours: 4,
+      defaultSemester: 3,
+      description: 'Advanced OOP concepts, design patterns, SOLID principles.',
+    },
+  });
+
+  const se301 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE301',
+      name: 'Algorithms',
+      creditHours: 4,
+      defaultSemester: 5,
+      description: 'Algorithm design and analysis. Sorting, searching, dynamic programming, greedy algorithms.',
+    },
+  });
+
+  const se302 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE302',
+      name: 'Database Systems',
+      creditHours: 4,
+      defaultSemester: 5,
+      description: 'Relational databases, SQL, normalization, transactions, and NoSQL basics.',
+    },
+  });
+
+  const se401 = await prisma.course.create({
+    data: {
+      departmentId: softwareEng.id,
+      code: 'SE401',
+      name: 'Software Engineering Principles',
+      creditHours: 3,
+      defaultSemester: 7,
+      description: 'SDLC, Agile, testing, CI/CD, software architecture.',
+    },
+  });
+
+  // Computer Science Courses
+  const cs201 = await prisma.course.create({
+    data: {
+      departmentId: computerSci.id,
+      code: 'CS201',
+      name: 'Discrete Mathematics',
+      creditHours: 3,
+      defaultSemester: 2,
+      description: 'Logic, sets, functions, relations, graphs, and combinatorics.',
+    },
+  });
+
+  const cs301 = await prisma.course.create({
+    data: {
+      departmentId: computerSci.id,
+      code: 'CS301',
+      name: 'Operating Systems',
+      creditHours: 4,
+      defaultSemester: 5,
+      description: 'Processes, threads, memory management, file systems, and concurrency.',
+    },
+  });
+
+  // Information Systems Courses
+  const is101 = await prisma.course.create({
+    data: {
+      departmentId: informationSys.id,
+      code: 'IS101',
+      name: 'Business Information Systems',
+      creditHours: 3,
+      defaultSemester: 1,
+      description: 'Role of IT in business, ERP systems, CRM, and business analytics.',
+    },
+  });
+
+  console.log('✅ Created 10 courses\n');
+
+  // 4. Set up Prerequisites
+  console.log('🔗 Setting up course prerequisites...');
+
+  // SE101 is prerequisite for SE201, SE202
+  await prisma.course.update({
+    where: { id: se201.id },
+    data: {
+      prerequisites: {
+        connect: { id: se101.id },
+      },
+    },
+  });
+
+  await prisma.course.update({
+    where: { id: se202.id },
+    data: {
+      prerequisites: {
+        connect: { id: se101.id },
+      },
+    },
+  });
+
+  // SE201 is prerequisite for SE301
+  await prisma.course.update({
+    where: { id: se301.id },
+    data: {
+      prerequisites: {
+        connect: [{ id: se201.id }, { id: se202.id }],
+      },
+    },
+  });
+
+  // SE201 is prerequisite for SE302
+  await prisma.course.update({
+    where: { id: se302.id },
+    data: {
+      prerequisites: {
+        connect: { id: se201.id },
+      },
+    },
+  });
+
+  // SE301, SE302 are prerequisites for SE401
+  await prisma.course.update({
+    where: { id: se401.id },
+    data: {
+      prerequisites: {
+        connect: [{ id: se301.id }, { id: se302.id }],
+      },
+    },
+  });
+
+  console.log('✅ Prerequisites configured\n');
+
+  // 5. Create Rooms
+  console.log('🏫 Creating rooms...');
+
+  const rooms = await prisma.room.createMany({
+    data: [
+      // Lecture rooms
+      { name: 'A101', capacity: 50, type: 'lecture' },
+      { name: 'A102', capacity: 50, type: 'lecture' },
+      { name: 'A103', capacity: 45, type: 'lecture' },
+      { name: 'A201', capacity: 40, type: 'lecture' },
+      { name: 'A202', capacity: 40, type: 'lecture' },
+      { name: 'B101', capacity: 60, type: 'lecture' },
+      { name: 'B102', capacity: 60, type: 'lecture' },
+
+      // Computer labs
+      { name: 'Lab-C101', capacity: 30, type: 'lab' },
+      { name: 'Lab-C102', capacity: 30, type: 'lab' },
+      { name: 'Lab-C103', capacity: 25, type: 'lab' },
+      { name: 'Lab-D201', capacity: 35, type: 'lab' },
+      { name: 'Lab-D202', capacity: 35, type: 'lab' },
+    ],
+  });
+
+  console.log(`✅ Created ${rooms.count} rooms\n`);
+
+  // 6. Create Time Slots
+  console.log('⏰ Creating time slots...');
+
+  const timeSlots = [
+    // Monday
+    { day: DayOfWeek.Mon, start: '08:30', end: '10:00' },
+    { day: DayOfWeek.Mon, start: '10:15', end: '11:45' },
+    { day: DayOfWeek.Mon, start: '12:00', end: '13:30' },
+    { day: DayOfWeek.Mon, start: '14:00', end: '15:30' },
+
+    // Tuesday
+    { day: DayOfWeek.Tue, start: '08:30', end: '10:00' },
+    { day: DayOfWeek.Tue, start: '10:15', end: '11:45' },
+    { day: DayOfWeek.Tue, start: '12:00', end: '13:30' },
+    { day: DayOfWeek.Tue, start: '14:00', end: '15:30' },
+
+    // Wednesday
+    { day: DayOfWeek.Wed, start: '08:30', end: '10:00' },
+    { day: DayOfWeek.Wed, start: '10:15', end: '11:45' },
+    { day: DayOfWeek.Wed, start: '12:00', end: '13:30' },
+    { day: DayOfWeek.Wed, start: '14:00', end: '15:30' },
+
+    // Thursday
+    { day: DayOfWeek.Thu, start: '08:30', end: '10:00' },
+    { day: DayOfWeek.Thu, start: '10:15', end: '11:45' },
+    { day: DayOfWeek.Thu, start: '12:00', end: '13:30' },
+    { day: DayOfWeek.Thu, start: '14:00', end: '15:30' },
+
+    // Friday
+    { day: DayOfWeek.Fri, start: '08:30', end: '10:00' },
+    { day: DayOfWeek.Fri, start: '10:15', end: '11:45' },
+    { day: DayOfWeek.Fri, start: '12:00', end: '13:30' },
+  ];
+
+  await prisma.timeSlot.createMany({
+    data: timeSlots.map(slot => ({
+      dayOfWeek: slot.day,
+      startTime: new Date(`1970-01-01T${slot.start}:00`),
+      endTime: new Date(`1970-01-01T${slot.end}:00`),
+    })),
+  });
+
+  console.log(`✅ Created ${timeSlots.length} time slots\n`);
+
+  // 7. Create Semesters
+  console.log('📅 Creating semesters...');
+
+  const fall2025 = await prisma.semester.create({
+    data: {
+      name: 'Fall 2025',
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2025-12-31'),
+    },
+  });
+
+  const spring2026 = await prisma.semester.create({
+    data: {
+      name: 'Spring 2026',
+      startDate: new Date('2026-01-15'),
+      endDate: new Date('2026-05-31'),
+    },
+  });
+
+  console.log('✅ Created 2 semesters\n');
+
+  // 8. Create Sample Sections (Fall 2025)
+  console.log('📖 Creating sections for Fall 2025...');
+
+  // Get rooms for assignment
+  const allRooms = await prisma.room.findMany();
+  const allTimeSlots = await prisma.timeSlot.findMany();
+
+  const section1 = await prisma.section.create({
+    data: {
+      courseId: se101.id,
+      semesterId: fall2025.id,
+      teacherId: teacher1.id,
+      name: 'A',
+      maxCapacity: 40,
+      roomId: allRooms[0].id, // A101
+      timeSlotId: allTimeSlots[0].id, // Monday 08:30-10:00
+    },
+  });
+
+  const section2 = await prisma.section.create({
+    data: {
+      courseId: se101.id,
+      semesterId: fall2025.id,
+      teacherId: teacher1.id,
+      name: 'B',
+      maxCapacity: 40,
+      roomId: allRooms[1].id, // A102
+      timeSlotId: allTimeSlots[4].id, // Tuesday 08:30-10:00
+    },
+  });
+
+  const section3 = await prisma.section.create({
+    data: {
+      courseId: se201.id,
+      semesterId: fall2025.id,
+      teacherId: teacher2.id,
+      name: 'A',
+      maxCapacity: 35,
+      roomId: allRooms[2].id, // A103
+      timeSlotId: allTimeSlots[1].id, // Monday 10:15-11:45
+    },
+  });
+
+  const section4 = await prisma.section.create({
+    data: {
+      courseId: se302.id,
+      semesterId: fall2025.id,
+      teacherId: teacher3.id,
+      name: 'A',
+      maxCapacity: 30,
+      roomId: allRooms[7].id, // Lab-C101
+      timeSlotId: allTimeSlots[8].id, // Wednesday 08:30-10:00
+    },
+  });
+
+  console.log('✅ Created 4 sections\n');
+
+  // 9. Create Sample Enrollments
+  console.log('✍️  Creating student enrollments...');
+
+  const allStudents = await prisma.user.findMany({
+    where: { role: Role.student },
+  });
+
+  // Enroll students in SE101 Section A
+  for (let i = 0; i < Math.min(3, allStudents.length); i++) {
+    await prisma.enrollment.create({
+      data: {
+        studentId: allStudents[i].id,
+        sectionId: section1.id,
+        status: 'enrolled',
+      },
+    });
+  }
+
+  // Enroll students in SE201 Section A
+  if (allStudents.length > 3) {
+    await prisma.enrollment.create({
+      data: {
+        studentId: allStudents[3].id,
+        sectionId: section3.id,
+        status: 'enrolled',
+      },
+    });
+  }
+
+  console.log('✅ Created sample enrollments\n');
+
+  // 10. Create Sample Grades (for prerequisite testing)
+  console.log('📊 Creating sample grades...');
+
+  // Student 1 passed SE101 in a previous semester
+  if (allStudents.length > 0) {
+    await prisma.grade.create({
+      data: {
+        studentId: allStudents[0].id,
+        courseId: se101.id,
+        semesterId: fall2025.id,
+        grade: 'A',
+        passed: true,
+      },
+    });
+
+    // Student 2 failed SE101 (will need to retake)
+    await prisma.grade.create({
+      data: {
+        studentId: allStudents[1].id,
+        courseId: se101.id,
+        semesterId: fall2025.id,
+        grade: 'F',
+        passed: false,
+      },
+    });
+  }
+
+  console.log('✅ Created sample grades\n');
+
+  console.log('🎉 Database seeding completed successfully!\n');
+  console.log('📊 Summary:');
+  console.log('   - Users: 9 (1 admin, 3 teachers, 5 students)');
+  console.log('   - Departments: 3');
+  console.log('   - Courses: 10 (with prerequisites)');
+  console.log('   - Rooms: 12 (7 lecture, 5 labs)');
+  console.log('   - Time Slots: 19');
+  console.log('   - Semesters: 2');
+  console.log('   - Sections: 4');
+  console.log('   - Enrollments: Multiple sample enrollments');
+  console.log('   - Grades: 2 sample grades\n');
+  console.log('💡 Next: Run `npx prisma studio` to view the data!');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Seeding failed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
