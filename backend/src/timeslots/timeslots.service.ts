@@ -3,18 +3,18 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TimeslotsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(day?: string) {
     const where: any = {};
 
     if (day) {
       where.days = {
-        has: day,
+        contains: day,
       };
     }
 
-    return this.prisma.timeSlot.findMany({
+    const timeSlots = await this.prisma.timeSlot.findMany({
       where,
       include: {
         _count: {
@@ -27,6 +27,11 @@ export class TimeslotsService {
         { startTime: 'asc' },
       ],
     });
+
+    return timeSlots.map(ts => ({
+      ...ts,
+      days: JSON.parse(ts.days) as string[],
+    }));
   }
 
   async findOne(id: number) {
@@ -52,7 +57,10 @@ export class TimeslotsService {
       throw new NotFoundException(`TimeSlot with ID ${id} not found`);
     }
 
-    return timeSlot;
+    return {
+      ...timeSlot,
+      days: JSON.parse(timeSlot.days) as string[],
+    };
   }
 
   async create(data: {
@@ -70,13 +78,19 @@ export class TimeslotsService {
       throw new BadRequestException('End time must be after start time');
     }
 
-    return this.prisma.timeSlot.create({
+    const created = await this.prisma.timeSlot.create({
       data: {
         ...data,
+        days: JSON.stringify(data.days),
         code: data.code.toUpperCase(),
         duration,
       },
     });
+
+    return {
+      ...created,
+      days: JSON.parse(created.days) as string[],
+    };
   }
 
   async update(
@@ -102,14 +116,20 @@ export class TimeslotsService {
       }
     }
 
-    return this.prisma.timeSlot.update({
+    const updated = await this.prisma.timeSlot.update({
       where: { id },
       data: {
         ...data,
+        days: data.days ? JSON.stringify(data.days) : undefined,
         code: data.code ? data.code.toUpperCase() : undefined,
         duration,
       },
     });
+
+    return {
+      ...updated,
+      days: JSON.parse(updated.days) as string[],
+    };
   }
 
   async delete(id: number) {

@@ -331,8 +331,8 @@ export default function RoomsManagementPage() {
                     <input
                       type="number"
                       min="1"
-                      value={formData.floor}
-                      onChange={(e) => setFormData({ ...formData, floor: parseInt(e.target.value) })}
+                      value={formData.floor || ''}
+                      onChange={(e) => setFormData({ ...formData, floor: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="1"
                       required
@@ -347,8 +347,8 @@ export default function RoomsManagementPage() {
                     <input
                       type="number"
                       min="1"
-                      value={formData.capacity}
-                      onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                      value={formData.capacity || ''}
+                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="40"
                       required
@@ -418,8 +418,8 @@ export default function RoomsManagementPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.computerCount}
-                      onChange={(e) => setFormData({ ...formData, computerCount: parseInt(e.target.value) })}
+                      value={formData.computerCount || ''}
+                      onChange={(e) => setFormData({ ...formData, computerCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                       className="w-full md:w-48 px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="0"
                       disabled={isSubmitting || !formData.hasComputers}

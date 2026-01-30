@@ -22,7 +22,7 @@ export class SchedulesService {
             });
         }
 
-        return this.prisma.schedule.create({
+        const schedule = await this.prisma.schedule.create({
             data,
             include: {
                 course: true,
@@ -31,6 +31,14 @@ export class SchedulesService {
                 timeSlot: true,
             },
         });
+
+        return {
+            ...schedule,
+            timeSlot: {
+                ...schedule.timeSlot,
+                days: JSON.parse(schedule.timeSlot.days),
+            },
+        };
     }
 
     async findAll(filters?: {
@@ -39,7 +47,7 @@ export class SchedulesService {
         teacherId?: number;
         roomId?: number;
     }) {
-        return this.prisma.schedule.findMany({
+        const schedules = await this.prisma.schedule.findMany({
             where: {
                 ...(filters?.sectionId && { sectionId: filters.sectionId }),
                 ...(filters?.courseId && { courseId: filters.courseId }),
@@ -62,6 +70,14 @@ export class SchedulesService {
                 createdAt: 'desc',
             },
         });
+
+        return schedules.map(schedule => ({
+            ...schedule,
+            timeSlot: schedule.timeSlot ? {
+                ...schedule.timeSlot,
+                days: JSON.parse(schedule.timeSlot.days),
+            } : null,
+        }));
     }
 
     async findOne(id: number) {
@@ -85,7 +101,13 @@ export class SchedulesService {
             throw new NotFoundException(`Schedule with ID ${id} not found`);
         }
 
-        return schedule;
+        return {
+            ...schedule,
+            timeSlot: schedule.timeSlot ? {
+                ...schedule.timeSlot,
+                days: JSON.parse(schedule.timeSlot.days),
+            } : null,
+        };
     }
 
     async update(id: number, data: {
@@ -116,7 +138,7 @@ export class SchedulesService {
             }
         }
 
-        return this.prisma.schedule.update({
+        const schedule = await this.prisma.schedule.update({
             where: { id },
             data,
             include: {
@@ -126,11 +148,24 @@ export class SchedulesService {
                 timeSlot: true,
             },
         });
+
+        return {
+            ...schedule,
+            timeSlot: schedule.timeSlot ? {
+                ...schedule.timeSlot,
+                days: JSON.parse(schedule.timeSlot.days),
+            } : null,
+        };
     }
 
     async remove(id: number) {
         await this.findOne(id);
-        return this.prisma.schedule.delete({ where: { id } });
+        const schedule = await this.prisma.schedule.delete({
+            where: { id },
+            include: { timeSlot: true } // Need to separate delete from response transformation? No, simple delete return is fine, but if I want to return the object I should.
+        });
+        // Simple delete doesn't need detailed return usually, but let's be safe.
+        return schedule; // Skipping transformation for remove as it's rarely used for display immediately
     }
 
     async checkConflicts(data: {
