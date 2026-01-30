@@ -12,7 +12,6 @@ const adminNavItems = [
   { label: 'Time Slots', href: '/admin/timeslots' },
   { label: 'Users', href: '/admin/users' },
   { label: 'Events', href: '/admin/events' },
-  { label: 'Profile', href: '/admin/profile' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
