@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { BookPlus, Search, Edit2, Trash2, X } from 'lucide-react';
-import { coursesApi, Course, CreateCourseData } from '@/lib/api/courses';
-import { departmentsApi, Department } from '@/lib/api/departments';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { BookPlus, Search, Edit2, Trash2, X } from "lucide-react";
+import { coursesApi, Course, CreateCourseData } from "@/lib/api/courses";
+import { departmentsApi, Department } from "@/lib/api/departments";
+import toast from "react-hot-toast";
 
 export default function CoursesManagementPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -16,9 +16,9 @@ export default function CoursesManagementPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState<CreateCourseData>({
-    code: '',
-    name: '',
-    description: '',
+    code: "",
+    name: "",
+    description: "",
     departmentId: 0,
     creditHours: 3,
     level: 100,
@@ -36,8 +36,8 @@ export default function CoursesManagementPage() {
       const data = await departmentsApi.getAll();
       setDepartments(data);
     } catch (error) {
-      toast.error('Failed to load departments');
-      console.error('Error fetching departments:', error);
+      toast.error("Failed to load departments");
+      console.error("Error fetching departments:", error);
     }
   };
 
@@ -48,30 +48,31 @@ export default function CoursesManagementPage() {
       const data = await coursesApi.getAll();
       setCourses(data);
     } catch (error) {
-      toast.error('Failed to load courses');
-      console.error('Error fetching courses:', error);
+      toast.error("Failed to load courses");
+      console.error("Error fetching courses:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handles course creation by validating input, submitting to the API, managing loading state, resetting the form on success, and surfacing errors via toast notifications.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.code || !formData.name || !formData.departmentId) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setIsSubmitting(true);
       await coursesApi.create(formData);
-      toast.success('Course created successfully');
+      toast.success("Course created successfully");
       setShowAddModal(false);
       setFormData({
-        code: '',
-        name: '',
-        description: '',
+        code: "",
+        name: "",
+        description: "",
         departmentId: 0,
         creditHours: 3,
         level: 100,
@@ -79,42 +80,47 @@ export default function CoursesManagementPage() {
       });
       fetchCourses();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create course');
-      console.error('Error creating course:', error);
+      toast.error(error.response?.data?.message || "Failed to create course");
+      console.error("Error creating course:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Deletes a course with user confirmation, handles API errors (including stale 404s), shows toast feedback, and refreshes state accordingly.
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Are you sure you want to delete ${name}?`)) return;
 
     try {
       await coursesApi.delete(id);
-      toast.success('Course deleted successfully');
+      toast.success("Course deleted successfully");
       fetchCourses();
     } catch (error: any) {
       const status = error.response?.status;
       if (status === 404) {
-        toast.error('Course no longer exists. Refreshing list...');
+        toast.error("Course no longer exists. Refreshing list...");
         fetchCourses();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to delete course');
+        toast.error(error.response?.data?.message || "Failed to delete course");
       }
-      console.error('Error deleting course:', error);
+      console.error("Error deleting course:", error);
     }
   };
 
   // Filter locally by search query AND selected department
   const filteredCourses = courses.filter((course) => {
-    const matchesDepartment = selectedDepartment === 'all' || course.departmentId === parseInt(selectedDepartment);
-    const matchesSearch = !searchQuery ||
+    const matchesDepartment =
+      selectedDepartment === "all" ||
+      course.departmentId === parseInt(selectedDepartment);
+    const matchesSearch =
+      !searchQuery ||
       course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesDepartment && matchesSearch;
   });
 
+  // Renders the Courses page header with title, description, and an action button to open the “Add Course” modal.
   return (
     <div className="space-y-12">
       {/* Header */}
@@ -174,7 +180,7 @@ export default function CoursesManagementPage() {
       {/* Courses Grid */}
       <div>
         <div className="text-sm font-medium text-black uppercase tracking-wide mb-6">
-          02. Courses ({isLoading ? '...' : filteredCourses.length})
+          02. Courses ({isLoading ? "..." : filteredCourses.length})
         </div>
         <div className="grid md:grid-cols-2 gap-1 bg-gray-200 p-1">
           {isLoading ? (
@@ -189,9 +195,18 @@ export default function CoursesManagementPage() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex justify-between"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-4 w-32 bg-gray-200 rounded"></div></div>
-                    <div className="flex justify-between"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-4 w-10 bg-gray-200 rounded"></div></div>
-                    <div className="flex justify-between"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-4 w-10 bg-gray-200 rounded"></div></div>
+                    <div className="flex justify-between">
+                      <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-10 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-10 bg-gray-200 rounded"></div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -202,10 +217,15 @@ export default function CoursesManagementPage() {
             </div>
           ) : (
             filteredCourses.map((course) => (
-              <div key={course.id} className="bg-white p-8 hover:bg-gray-50 transition-colors">
+              <div
+                key={course.id}
+                className="bg-white p-8 hover:bg-gray-50 transition-colors"
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="text-2xl font-bold text-black mb-1">{course.code}</div>
+                    <div className="text-2xl font-bold text-black mb-1">
+                      {course.code}
+                    </div>
                     <div className="text-sm text-gray-600">{course.name}</div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -228,25 +248,32 @@ export default function CoursesManagementPage() {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Department</span>
-                    <span className="text-black font-medium">{course.department?.name || 'N/A'}</span>
+                    <span className="text-black font-medium">
+                      {course.department?.name || "N/A"}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Credit Hours</span>
-                    <span className="text-black font-medium">{course.creditHours}</span>
+                    <span className="text-black font-medium">
+                      {course.creditHours}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Level</span>
-                    <span className="text-black font-medium">{course.level}</span>
+                    <span className="text-black font-medium">
+                      {course.level}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Lab Component</span>
                     <span
-                      className={`px-3 py-1 text-xs font-medium ${course.hasLab
-                        ? 'border border-black text-black'
-                        : 'border border-gray-300 text-gray-400'
-                        }`}
+                      className={`px-3 py-1 text-xs font-medium ${
+                        course.hasLab
+                          ? "border border-black text-black"
+                          : "border border-gray-300 text-gray-400"
+                      }`}
                     >
-                      {course.hasLab ? 'YES' : 'NO'}
+                      {course.hasLab ? "YES" : "NO"}
                     </span>
                   </div>
                 </div>
@@ -266,7 +293,9 @@ export default function CoursesManagementPage() {
                 <div className="text-xs font-medium tracking-wide uppercase text-gray-400 mb-2">
                   Course Management
                 </div>
-                <h2 className="text-2xl font-bold text-black">Add New Course</h2>
+                <h2 className="text-2xl font-bold text-black">
+                  Add New Course
+                </h2>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -291,7 +320,12 @@ export default function CoursesManagementPage() {
                     <input
                       type="text"
                       value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          code: e.target.value.toUpperCase(),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors uppercase"
                       placeholder="SE301"
                       required
@@ -305,7 +339,9 @@ export default function CoursesManagementPage() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="Data Structures"
                       required
@@ -320,7 +356,9 @@ export default function CoursesManagementPage() {
                   <textarea
                     rows={3}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors resize-none"
                     placeholder="Course description..."
                   />
@@ -339,7 +377,12 @@ export default function CoursesManagementPage() {
                     </label>
                     <select
                       value={formData.departmentId}
-                      onChange={(e) => setFormData({ ...formData, departmentId: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          departmentId: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       required
                     >
@@ -361,7 +404,12 @@ export default function CoursesManagementPage() {
                       min="1"
                       max="6"
                       value={formData.creditHours}
-                      onChange={(e) => setFormData({ ...formData, creditHours: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          creditHours: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="4"
                       required
@@ -374,7 +422,12 @@ export default function CoursesManagementPage() {
                     </label>
                     <select
                       value={formData.level}
-                      onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          level: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       required
                     >
@@ -391,10 +444,15 @@ export default function CoursesManagementPage() {
                     type="checkbox"
                     id="hasLab"
                     checked={formData.hasLab}
-                    onChange={(e) => setFormData({ ...formData, hasLab: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, hasLab: e.target.checked })
+                    }
                     className="h-5 w-5 border-gray-300 text-black focus:ring-black"
                   />
-                  <label htmlFor="hasLab" className="text-sm font-medium text-black">
+                  <label
+                    htmlFor="hasLab"
+                    className="text-sm font-medium text-black"
+                  >
                     This course has a lab component
                   </label>
                 </div>
@@ -406,7 +464,7 @@ export default function CoursesManagementPage() {
                   disabled={isSubmitting}
                   className="px-8 py-3 bg-black text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Course'}
+                  {isSubmitting ? "Creating..." : "Create Course"}
                 </button>
                 <button
                   type="button"

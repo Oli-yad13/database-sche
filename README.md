@@ -14,6 +14,7 @@ A comprehensive college scheduling system built with modern technologies to auto
 ## ✨ Features
 
 ### Core Functionality
+
 - ✅ **User Authentication** - Secure JWT-based auth with role-based access control
 - ✅ **Role Management** - Admin, Teacher, and Student roles
 - ✅ **Course Catalog** - Manage courses with prerequisites and co-requisites
@@ -24,6 +25,7 @@ A comprehensive college scheduling system built with modern technologies to auto
 - ✅ **Grade Tracking** - Record and track student grades
 
 ### Advanced Features (Enhanced Schema)
+
 - 🚧 **Academic Programs** - Define degree programs and curricula
 - 🚧 **Student Profiles** - Track student progress, GPA, and academic standing
 - 🚧 **Teacher Profiles** - Manage teaching loads and availability
@@ -64,6 +66,7 @@ scheduling-system-fdb/
 ## 🗂️ Database Schema
 
 ### Current Schema (Basic)
+
 - Users (admin, teacher, student roles)
 - Departments
 - Courses (with prerequisites)
@@ -75,7 +78,9 @@ scheduling-system-fdb/
 - Grades
 
 ### Enhanced Schema (Production-Ready)
+
 All of the above PLUS:
+
 - RefreshToken (for JWT refresh)
 - AcademicYear
 - Program & Curriculum
@@ -96,6 +101,7 @@ See `SCHEMA_ANALYSIS.md` for detailed analysis of what's needed and why.
 ## 🔐 Authentication API
 
 ### Public Endpoints
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login and get tokens
 - `POST /api/auth/refresh` - Refresh access token
@@ -103,12 +109,14 @@ See `SCHEMA_ANALYSIS.md` for detailed analysis of what's needed and why.
 - `POST /api/auth/reset-password` - Reset password with token
 
 ### Protected Endpoints
+
 - `GET /api/auth/profile` - Get current user profile
 - `PATCH /api/auth/change-password` - Change password
 - `POST /api/auth/logout` - Logout (invalidate token)
 - `POST /api/auth/logout-all` - Logout from all devices
 
 ### Role-Based Access
+
 ```typescript
 // Admin only
 @Roles(Role.admin)
@@ -137,11 +145,13 @@ See `AUTH_SYSTEM_COMPLETE.md` for full documentation.
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 - Git
 
 ### 1. Clone & Install
+
 ```bash
 # Clone repository
 git clone <repo-url>
@@ -157,6 +167,7 @@ npm install
 ```
 
 ### 2. Setup Database
+
 ```bash
 cd backend
 
@@ -171,6 +182,7 @@ npx prisma generate
 ```
 
 ### 3. Configure Environment
+
 ```bash
 # Copy example env file
 cp .env.example .env
@@ -184,6 +196,7 @@ cp .env.example .env
 ### 4. Start Development Servers
 
 **Backend:**
+
 ```bash
 cd backend
 npm run start:dev
@@ -191,6 +204,7 @@ npm run start:dev
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm run dev -- -p 3001
@@ -198,6 +212,7 @@ npm run dev -- -p 3001
 ```
 
 ### 5. Test Authentication
+
 ```bash
 # Register admin user
 curl -X POST http://localhost:3000/api/auth/register \
@@ -220,18 +235,19 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ## 📚 Documentation
 
-| Document | Description |
-|----------|-------------|
-| [NEXT_STEPS.md](./NEXT_STEPS.md) | **START HERE** - Step-by-step setup guide |
-| [SCHEMA_ANALYSIS.md](./SCHEMA_ANALYSIS.md) | Analysis of missing features & scenarios |
-| [AUTH_SYSTEM_COMPLETE.md](./AUTH_SYSTEM_COMPLETE.md) | Complete auth documentation |
-| [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md) | Overall project analysis |
-| [SETUP_COMPLETE.md](./SETUP_COMPLETE.md) | Initial setup details |
-| [QUICK_START.md](./QUICK_START.md) | Quick reference guide |
+| Document                                             | Description                               |
+| ---------------------------------------------------- | ----------------------------------------- |
+| [NEXT_STEPS.md](./NEXT_STEPS.md)                     | **START HERE** - Step-by-step setup guide |
+| [SCHEMA_ANALYSIS.md](./SCHEMA_ANALYSIS.md)           | Analysis of missing features & scenarios  |
+| [AUTH_SYSTEM_COMPLETE.md](./AUTH_SYSTEM_COMPLETE.md) | Complete auth documentation               |
+| [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md)         | Overall project analysis                  |
+| [SETUP_COMPLETE.md](./SETUP_COMPLETE.md)             | Initial setup details                     |
+| [QUICK_START.md](./QUICK_START.md)                   | Quick reference guide                     |
 
 ## 🎯 Roadmap
 
 ### Phase 1: Authentication & Core Setup ✅
+
 - [x] Database schema design
 - [x] Prisma setup and migrations
 - [x] JWT authentication system
@@ -239,6 +255,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 - [x] User management API
 
 ### Phase 2: CRUD Modules (Current)
+
 - [ ] Departments API
 - [ ] Programs API
 - [ ] Courses API (with prerequisites)
@@ -248,6 +265,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 - [ ] Users management API
 
 ### Phase 3: Scheduling Core
+
 - [ ] Sections API
 - [ ] Teacher assignment
 - [ ] Manual scheduling
@@ -256,6 +274,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 - [ ] Prerequisite validation
 
 ### Phase 4: Advanced Scheduling
+
 - [ ] Auto-scheduler algorithm
 - [ ] Multi-session course support
 - [ ] Teacher availability constraints
@@ -264,6 +283,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 - [ ] Waitlist management
 
 ### Phase 5: Frontend
+
 - [ ] Admin dashboard
 - [ ] Course catalog UI
 - [ ] Section management UI
@@ -273,6 +293,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 - [ ] Student portal
 
 ### Phase 6: Production
+
 - [ ] Email notifications
 - [ ] Reports & analytics
 - [ ] Audit logging
@@ -283,6 +304,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 ## 🛠️ Development Commands
 
 ### Backend
+
 ```bash
 # Development (auto-reload)
 npm run start:dev
@@ -310,6 +332,7 @@ npx prisma migrate reset
 ```
 
 ### Frontend
+
 ```bash
 # Development
 npm run dev
@@ -327,23 +350,27 @@ npm run lint
 ## 🐛 Troubleshooting
 
 ### Database connection failed
+
 ```bash
 cd backend
 npx prisma dev start
 ```
 
 ### Prisma Client not generated
+
 ```bash
 cd backend
 npx prisma generate
 ```
 
 ### Port already in use
+
 - Backend uses port 3000
 - Frontend uses port 3001
 - Change with `PORT=3002 npm run start:dev`
 
 ### Authentication errors
+
 - Check JWT secrets in `.env`
 - Verify token format: `Authorization: Bearer <token>`
 - Check if token expired (access token: 15 min)
@@ -351,6 +378,7 @@ npx prisma generate
 ## 📖 API Documentation
 
 Once the backend is running, API documentation will be available at:
+
 - REST API: `http://localhost:3000/api`
 - Swagger (future): `http://localhost:3000/api/docs`
 
@@ -366,6 +394,7 @@ Once the backend is running, API documentation will be available at:
 - ✅ SQL injection prevention (Prisma ORM)
 
 ### TODO (Production)
+
 - [ ] Rate limiting
 - [ ] Email verification
 - [ ] 2FA support
@@ -382,17 +411,19 @@ Once the backend is running, API documentation will be available at:
 
 ## 📝 License
 
-[Your License Here]
-
 ## 👥 Team
 
-[Your Team Info]
-
----
+1. Henok Workineh
+2. Hose Dereje
+3. Michael Gesese
+4. Nathenael Tamirat
+5. Oliyad Bekele
+6. Yani Akram
 
 ## 📞 Support
 
 For issues and questions:
+
 - Check documentation in `/docs`
 - Review `NEXT_STEPS.md` for setup help
 - See `SCHEMA_ANALYSIS.md` for feature details
