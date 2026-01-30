@@ -78,8 +78,8 @@ export default function Home() {
       <section className="pt-40 pb-32 px-8 lg:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-16 items-center">
-            {/* Left - Hero text */}
-            <div className="lg:col-span-7">
+            {/* Hero text - Full width */}
+            <div className="lg:col-span-12">
               <div className="inline-block px-4 py-2 border border-gray-200 text-xs font-medium tracking-wide uppercase mb-8">
                 University Management
               </div>
@@ -109,28 +109,6 @@ export default function Home() {
                 >
                   Staff Login
                 </Link>
-              </div>
-            </div>
-
-            {/* Right - Stats grid */}
-            <div className="lg:col-span-5">
-              <div className="grid grid-cols-2 gap-1 bg-gray-200 p-1">
-                <div className="bg-white p-8">
-                  <div className="text-4xl font-bold text-black mb-2">2.5K+</div>
-                  <div className="text-sm text-gray-600">Students</div>
-                </div>
-                <div className="bg-white p-8">
-                  <div className="text-4xl font-bold text-black mb-2">150+</div>
-                  <div className="text-sm text-gray-600">Instructors</div>
-                </div>
-                <div className="bg-white p-8">
-                  <div className="text-4xl font-bold text-black mb-2">300+</div>
-                  <div className="text-sm text-gray-600">Courses</div>
-                </div>
-                <div className="bg-white p-8">
-                  <div className="text-4xl font-bold text-black mb-2">99.9%</div>
-                  <div className="text-sm text-gray-600">Uptime</div>
-                </div>
               </div>
             </div>
           </div>
@@ -224,12 +202,12 @@ export default function Home() {
       {/* CTA - Asymmetric, bold */}
       <section className="py-32 px-8 lg:px-12 bg-black text-white">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="flex flex-col items-center text-center">
             <div>
               <h2 className="text-5xl lg:text-6xl font-bold mb-8 leading-tight">
                 Access your<br />schedule now
               </h2>
-              <p className="text-xl text-gray-400 mb-12 leading-relaxed">
+              <p className="text-xl text-gray-400 mb-12 leading-relaxed max-w-2xl mx-auto">
                 Students access with ID. Staff login with credentials.
               </p>
               <Link
@@ -239,25 +217,6 @@ export default function Home() {
                 Staff Login
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1 bg-gray-800">
-              <div className="bg-gray-900 p-8">
-                <div className="text-sm text-gray-400 mb-2">Setup time</div>
-                <div className="text-2xl font-bold">5 min</div>
-              </div>
-              <div className="bg-gray-900 p-8">
-                <div className="text-sm text-gray-400 mb-2">Support</div>
-                <div className="text-2xl font-bold">24/7</div>
-              </div>
-              <div className="bg-gray-900 p-8">
-                <div className="text-sm text-gray-400 mb-2">Data backup</div>
-                <div className="text-2xl font-bold">Daily</div>
-              </div>
-              <div className="bg-gray-900 p-8">
-                <div className="text-sm text-gray-400 mb-2">API access</div>
-                <div className="text-2xl font-bold">Full</div>
-              </div>
             </div>
           </div>
         </div>
