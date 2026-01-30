@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+// Imports React hooks, Next.js Link, authentication context, and icons for UI interactions
+import { useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 
+// Handles login form state, submission, error handling, and toggling password visibility
 export default function LoginPage() {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    usernameOrEmail: '',
-    password: '',
+    usernameOrEmail: "",
+    password: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginPage() {
       if (error.response?.data?.message) {
         setErrors({ submit: error.response.data.message });
       } else {
-        setErrors({ submit: 'Login failed. Please try again.' });
+        setErrors({ submit: "Login failed. Please try again." });
       }
     } finally {
       setIsLoading(false);
@@ -38,7 +40,10 @@ export default function LoginPage() {
       {/* Top navigation */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-black">
+          <Link
+            href="/"
+            className="text-2xl font-bold tracking-tight text-black"
+          >
             UNISCHEDULE
           </Link>
           <Link
@@ -59,12 +64,8 @@ export default function LoginPage() {
             <div className="text-xs font-medium tracking-wide uppercase text-gray-400 mb-4">
               Authentication
             </div>
-            <h1 className="text-4xl font-bold text-black mb-2">
-              Sign In
-            </h1>
-            <p className="text-gray-600">
-              Access your university dashboard
-            </p>
+            <h1 className="text-4xl font-bold text-black mb-2">Sign In</h1>
+            <p className="text-gray-600">Access your university dashboard</p>
           </div>
 
           {/* Form */}
@@ -102,7 +103,7 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
@@ -115,7 +116,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-0 top-0 h-full px-4 text-gray-400 hover:text-black transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -145,7 +146,7 @@ export default function LoginPage() {
                   Signing in...
                 </>
               ) : (
-                'Sign In'
+                "Sign In"
               )}
             </button>
           </form>
@@ -159,7 +160,7 @@ export default function LoginPage() {
               Forgot your password?
             </Link>
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 href="/auth/register"
                 className="text-black font-medium hover:underline"
@@ -176,8 +177,12 @@ export default function LoginPage() {
         <div className="max-w-md mx-auto flex justify-between items-center text-xs text-gray-400">
           <span>© 2026 UniSchedule</span>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-black transition-colors">Privacy</a>
-            <a href="#" className="hover:text-black transition-colors">Terms</a>
+            <a href="#" className="hover:text-black transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-black transition-colors">
+              Terms
+            </a>
           </div>
         </div>
       </div>

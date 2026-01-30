@@ -1,32 +1,35 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, GraduationCap } from 'lucide-react';
+// Imports React state, Next.js navigation, and UI icons for the page
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2, GraduationCap } from "lucide-react";
 
 export default function StudentLoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    studentId: '',
-    department: '',
-    yearLevel: '',
+    studentId: "",
+    department: "",
+    yearLevel: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
+  // Static list of department codes and names used for selection or display
   const departments = [
-    { code: 'SE', name: 'Software Engineering' },
-    { code: 'CS', name: 'Computer Science' },
-    { code: 'IT', name: 'Information Technology' },
-    { code: 'CE', name: 'Computer Engineering' },
+    { code: "SE", name: "Software Engineering" },
+    { code: "CS", name: "Computer Science" },
+    { code: "IT", name: "Information Technology" },
+    { code: "CE", name: "Computer Engineering" },
   ];
 
+  // List of academic year levels with display labels for forms or dropdowns
   const yearLevels = [
-    { value: '1', label: 'Year 1 (First Year)' },
-    { value: '2', label: 'Year 2 (Second Year)' },
-    { value: '3', label: 'Year 3 (Third Year)' },
-    { value: '4', label: 'Year 4 (Fourth Year)' },
+    { value: "1", label: "Year 1 (First Year)" },
+    { value: "2", label: "Year 2 (Second Year)" },
+    { value: "3", label: "Year 3 (Third Year)" },
+    { value: "4", label: "Year 4 (Fourth Year)" },
   ];
 
   const validateStudentId = (id: string) => {
@@ -35,11 +38,12 @@ export default function StudentLoginPage() {
     return pattern.test(id);
   };
 
+  // Calculates a student's current year (1-4) based on the last segment of their ID
   const calculateYearFromId = (studentId: string) => {
     // Extract year from ID (last 2 digits)
-    const parts = studentId.split('/');
+    const parts = studentId.split("/");
     if (parts.length === 3) {
-      const batchYear = parseInt('20' + parts[2]); // 25 -> 2025
+      const batchYear = parseInt("20" + parts[2]); // 25 -> 2025
       const currentYear = new Date().getFullYear();
       const yearsSinceBatch = currentYear - batchYear;
       return Math.min(Math.max(yearsSinceBatch + 1, 1), 4); // Between 1-4
@@ -47,25 +51,26 @@ export default function StudentLoginPage() {
     return null;
   };
 
+  // Validates input and logs in student by storing info locally, then redirects to dashboard
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
     // Validate student ID
     if (!validateStudentId(formData.studentId)) {
-      setErrors({ studentId: 'Invalid ID format. Use: ugr/0303/25' });
+      setErrors({ studentId: "Invalid ID format. Use: ugr/0303/25" });
       return;
     }
 
     // Validate department
     if (!formData.department) {
-      setErrors({ department: 'Please select your department' });
+      setErrors({ department: "Please select your department" });
       return;
     }
 
     // Validate year level
     if (!formData.yearLevel) {
-      setErrors({ yearLevel: 'Please select your year level' });
+      setErrors({ yearLevel: "Please select your year level" });
       return;
     }
 
@@ -78,15 +83,15 @@ export default function StudentLoginPage() {
         studentId: formData.studentId,
         department: formData.department,
         yearLevel: formData.yearLevel,
-        role: 'student',
+        role: "student",
       };
 
-      localStorage.setItem('studentAuth', JSON.stringify(studentData));
+      localStorage.setItem("studentAuth", JSON.stringify(studentData));
 
       // Redirect to student dashboard
-      router.push('/student');
+      router.push("/student");
     } catch (error) {
-      setErrors({ submit: 'Login failed. Please try again.' });
+      setErrors({ submit: "Login failed. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +104,11 @@ export default function StudentLoginPage() {
     if (validateStudentId(id)) {
       const suggestedYear = calculateYearFromId(id);
       if (suggestedYear) {
-        setFormData(prev => ({ ...prev, studentId: id, yearLevel: suggestedYear.toString() }));
+        setFormData((prev) => ({
+          ...prev,
+          studentId: id,
+          yearLevel: suggestedYear.toString(),
+        }));
       }
     }
   };
@@ -109,7 +118,10 @@ export default function StudentLoginPage() {
       {/* Top navigation */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-black">
+          <Link
+            href="/"
+            className="text-2xl font-bold tracking-tight text-black"
+          >
             UNISCHEDULE
           </Link>
           <Link
@@ -164,7 +176,9 @@ export default function StudentLoginPage() {
                   value={formData.studentId}
                   onChange={(e) => handleStudentIdChange(e.target.value)}
                   className={`w-full px-4 py-4 border text-lg font-mono ${
-                    errors.studentId ? 'border-black bg-gray-50' : 'border-gray-300'
+                    errors.studentId
+                      ? "border-black bg-gray-50"
+                      : "border-gray-300"
                   } text-black placeholder-gray-400 focus:outline-none focus:border-black transition-colors`}
                   placeholder="ugr/0303/25"
                   required
@@ -201,7 +215,9 @@ export default function StudentLoginPage() {
                       setFormData({ ...formData, department: e.target.value })
                     }
                     className={`w-full px-4 py-4 border ${
-                      errors.department ? 'border-black bg-gray-50' : 'border-gray-300'
+                      errors.department
+                        ? "border-black bg-gray-50"
+                        : "border-gray-300"
                     } text-black focus:outline-none focus:border-black transition-colors`}
                     required
                   >
@@ -213,7 +229,9 @@ export default function StudentLoginPage() {
                     ))}
                   </select>
                   {errors.department && (
-                    <p className="mt-2 text-xs text-black">{errors.department}</p>
+                    <p className="mt-2 text-xs text-black">
+                      {errors.department}
+                    </p>
                   )}
                 </div>
 
@@ -232,7 +250,9 @@ export default function StudentLoginPage() {
                       setFormData({ ...formData, yearLevel: e.target.value })
                     }
                     className={`w-full px-4 py-4 border ${
-                      errors.yearLevel ? 'border-black bg-gray-50' : 'border-gray-300'
+                      errors.yearLevel
+                        ? "border-black bg-gray-50"
+                        : "border-gray-300"
                     } text-black focus:outline-none focus:border-black transition-colors`}
                     required
                   >
@@ -244,7 +264,9 @@ export default function StudentLoginPage() {
                     ))}
                   </select>
                   {errors.yearLevel && (
-                    <p className="mt-2 text-xs text-black">{errors.yearLevel}</p>
+                    <p className="mt-2 text-xs text-black">
+                      {errors.yearLevel}
+                    </p>
                   )}
                 </div>
               </div>
@@ -269,7 +291,7 @@ export default function StudentLoginPage() {
                   Accessing Schedule...
                 </>
               ) : (
-                'View My Schedule'
+                "View My Schedule"
               )}
             </button>
           </form>

@@ -1,29 +1,32 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { LayoutGrid, Search, Trash2, X, Users } from 'lucide-react';
-import { sectionsApi, Section, CreateSectionData } from '@/lib/api/sections';
-import { departmentsApi, Department } from '@/lib/api/departments';
-import toast from 'react-hot-toast';
+// Imports React hooks, UI icons, API utilities and types for sections and departments, and toast notifications for feedback.
+import { useState, useEffect } from "react";
+import { LayoutGrid, Search, Trash2, X, Users } from "lucide-react";
+import { sectionsApi, Section, CreateSectionData } from "@/lib/api/sections";
+import { departmentsApi, Department } from "@/lib/api/departments";
+import toast from "react-hot-toast";
 
+// SectionsManagementPage state initialization for search, department/year filters, modals, section and department data, and loading/submitting states.
 export default function SectionsManagementPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Initializes section form state and triggers fetching of departments and sections on component mount.
   const [formData, setFormData] = useState<CreateSectionData>({
-    name: '',
-    code: '',
+    name: "",
+    code: "",
     departmentId: 0,
     yearLevel: 1,
     capacity: 40,
-    advisor: '',
-    description: '',
+    advisor: "",
+    description: "",
   });
 
   useEffect(() => {
@@ -36,63 +39,66 @@ export default function SectionsManagementPage() {
       const data = await departmentsApi.getAll();
       setDepartments(data);
     } catch (error) {
-      toast.error('Failed to load departments');
+      toast.error("Failed to load departments");
     }
   };
 
+  // Fetches sections from the API filtered by department and year level, updates state, manages loading indicator, and shows a toast on failure.
   const fetchSections = async () => {
     try {
       setIsLoading(true);
-      const departmentId = selectedDepartment !== 'all' ? parseInt(selectedDepartment) : undefined;
-      const yearLevel = selectedYear !== 'all' ? parseInt(selectedYear) : undefined;
+      const departmentId =
+        selectedDepartment !== "all" ? parseInt(selectedDepartment) : undefined;
+      const yearLevel =
+        selectedYear !== "all" ? parseInt(selectedYear) : undefined;
       const data = await sectionsApi.getAll(departmentId, yearLevel);
       setSections(data);
     } catch (error) {
-      toast.error('Failed to load sections');
+      toast.error("Failed to load sections");
     } finally {
       setIsLoading(false);
     }
   };
-
+  // Handles section creation: validates required fields, submits to API, manages loading state, resets form on success, refreshes section list, an
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.code || !formData.departmentId) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setIsSubmitting(true);
       await sectionsApi.create(formData);
-      toast.success('Section created successfully');
+      toast.success("Section created successfully");
       setShowAddModal(false);
       setFormData({
-        name: '',
-        code: '',
+        name: "",
+        code: "",
         departmentId: 0,
         yearLevel: 1,
         capacity: 40,
-        advisor: '',
-        description: '',
+        advisor: "",
+        description: "",
       });
       fetchSections();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create section');
+      toast.error(error.response?.data?.message || "Failed to create section");
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  // Deletes a section with confirmation, shows success/error toasts, and refreshes the list; also sets up dynamic section fetching when department or year filters change and defines available year levels.
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Are you sure you want to delete ${name}?`)) return;
 
     try {
       await sectionsApi.delete(id);
-      toast.success('Section deleted successfully');
+      toast.success("Section deleted successfully");
       fetchSections();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete section');
+      toast.error(error.response?.data?.message || "Failed to delete section");
     }
   };
 
@@ -102,22 +108,25 @@ export default function SectionsManagementPage() {
 
   const yearLevels = [1, 2, 3, 4];
 
+  // Filters sections based on search query, selected department, and selected year level, returning only matching results.
   const filteredSections = sections.filter((section) => {
     const matchesSearch =
       section.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       section.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesDepartment =
-      selectedDepartment === 'all' || section.departmentId === parseInt(selectedDepartment);
+      selectedDepartment === "all" ||
+      section.departmentId === parseInt(selectedDepartment);
     const matchesYear =
-      selectedYear === 'all' || section.yearLevel === parseInt(selectedYear);
+      selectedYear === "all" || section.yearLevel === parseInt(selectedYear);
     return matchesSearch && matchesDepartment && matchesYear;
   });
 
+  // Determines section enrollment status based on capacity utilization: returns "full" (≥95%), "high" (≥80%), or "normal" otherwise.
   const getEnrollmentStatus = (enrolled: number, capacity: number) => {
     const percentage = (enrolled / capacity) * 100;
-    if (percentage >= 95) return 'full';
-    if (percentage >= 80) return 'high';
-    return 'normal';
+    if (percentage >= 95) return "full";
+    if (percentage >= 80) return "high";
+    return "normal";
   };
 
   return (
@@ -203,17 +212,26 @@ export default function SectionsManagementPage() {
           ) : (
             filteredSections.map((section) => {
               const enrolled = section._count?.enrollments || 0;
-              const enrollmentStatus = getEnrollmentStatus(enrolled, section.capacity);
+              const enrollmentStatus = getEnrollmentStatus(
+                enrolled,
+                section.capacity,
+              );
               return (
-                <div key={section.id} className="bg-white p-8 hover:bg-gray-50 transition-colors">
+                <div
+                  key={section.id}
+                  className="bg-white p-8 hover:bg-gray-50 transition-colors"
+                >
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="text-2xl font-bold text-black mb-1 font-mono">
                         {section.code}
                       </div>
-                      <div className="text-sm text-gray-600 mb-1">{section.name}</div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        {section.name}
+                      </div>
                       <div className="text-xs text-gray-400">
-                        {section.department?.name || 'Unknown'} - Year {section.yearLevel}
+                        {section.department?.name || "Unknown"} - Year{" "}
+                        {section.yearLevel}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -230,11 +248,15 @@ export default function SectionsManagementPage() {
                   <div className="space-y-3 text-sm mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Advisor</span>
-                      <span className="text-black font-medium">{section.advisor || 'Not assigned'}</span>
+                      <span className="text-black font-medium">
+                        {section.advisor || "Not assigned"}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Capacity</span>
-                      <span className="text-black font-medium">{section.capacity}</span>
+                      <span className="text-black font-medium">
+                        {section.capacity}
+                      </span>
                     </div>
                   </div>
 
@@ -249,19 +271,22 @@ export default function SectionsManagementPage() {
                     <div className="h-2 bg-gray-100">
                       <div
                         className={`h-full transition-all ${
-                          enrollmentStatus === 'full'
-                            ? 'bg-black'
-                            : enrollmentStatus === 'high'
-                            ? 'bg-gray-600'
-                            : 'bg-gray-400'
+                          enrollmentStatus === "full"
+                            ? "bg-black"
+                            : enrollmentStatus === "high"
+                              ? "bg-gray-600"
+                              : "bg-gray-400"
                         }`}
-                        style={{ width: `${(enrolled / section.capacity) * 100}%` }}
+                        style={{
+                          width: `${(enrolled / section.capacity) * 100}%`,
+                        }}
                       />
                     </div>
                     <div className="text-xs text-gray-400">
-                      {enrollmentStatus === 'full' && 'Section Full'}
-                      {enrollmentStatus === 'high' && 'Almost Full'}
-                      {enrollmentStatus === 'normal' && `${section.capacity - enrolled} spots available`}
+                      {enrollmentStatus === "full" && "Section Full"}
+                      {enrollmentStatus === "high" && "Almost Full"}
+                      {enrollmentStatus === "normal" &&
+                        `${section.capacity - enrolled} spots available`}
                     </div>
                   </div>
                 </div>
@@ -281,7 +306,9 @@ export default function SectionsManagementPage() {
                 <div className="text-xs font-medium tracking-wide uppercase text-gray-400 mb-2">
                   Section Management
                 </div>
-                <h2 className="text-2xl font-bold text-black">Add New Section</h2>
+                <h2 className="text-2xl font-bold text-black">
+                  Add New Section
+                </h2>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -306,7 +333,9 @@ export default function SectionsManagementPage() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="Section A"
                       required
@@ -321,7 +350,12 @@ export default function SectionsManagementPage() {
                     <input
                       type="text"
                       value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          code: e.target.value.toUpperCase(),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors uppercase font-mono"
                       placeholder="SE-Y3-A"
                       required
@@ -337,7 +371,12 @@ export default function SectionsManagementPage() {
                     </label>
                     <select
                       value={formData.departmentId}
-                      onChange={(e) => setFormData({ ...formData, departmentId: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          departmentId: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       required
                       disabled={isSubmitting}
@@ -357,7 +396,12 @@ export default function SectionsManagementPage() {
                     </label>
                     <select
                       value={formData.yearLevel}
-                      onChange={(e) => setFormData({ ...formData, yearLevel: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          yearLevel: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       required
                       disabled={isSubmitting}
@@ -386,7 +430,12 @@ export default function SectionsManagementPage() {
                       type="number"
                       min="1"
                       value={formData.capacity}
-                      onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          capacity: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="40"
                       required
@@ -401,7 +450,9 @@ export default function SectionsManagementPage() {
                     <input
                       type="text"
                       value={formData.advisor}
-                      onChange={(e) => setFormData({ ...formData, advisor: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, advisor: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="Prof. Smith"
                       disabled={isSubmitting}
@@ -416,7 +467,9 @@ export default function SectionsManagementPage() {
                   <textarea
                     rows={3}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors resize-none"
                     placeholder="Section description..."
                     disabled={isSubmitting}
@@ -430,7 +483,7 @@ export default function SectionsManagementPage() {
                   className="px-8 py-3 bg-black text-white hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Section'}
+                  {isSubmitting ? "Creating..." : "Create Section"}
                 </button>
                 <button
                   type="button"
