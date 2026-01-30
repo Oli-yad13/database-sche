@@ -1,25 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { DoorOpen, Search, Trash2, X, Building2 } from 'lucide-react';
-import { roomsApi, Room, CreateRoomData } from '@/lib/api/rooms';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { DoorOpen, Search, Trash2, X, Building2 } from "lucide-react";
+import { roomsApi, Room, CreateRoomData } from "@/lib/api/rooms";
+import toast from "react-hot-toast";
 
+// RoomsManagementPage component state initialization for handling search, building/type filters, modals, room data, and loading/submitting states.
 export default function RoomsManagementPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBuilding, setSelectedBuilding] = useState<string>("all");
+  const [selectedType, setSelectedType] = useState<string>("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Initializes form state for creating or editing a room, including name, building, floor, capacity, type, and equipment details.
   const [formData, setFormData] = useState<CreateRoomData>({
-    name: '',
-    building: '',
+    name: "",
+    building: "",
     floor: 1,
     capacity: 40,
-    type: 'lecture',
+    type: "lecture",
     hasProjector: false,
     hasComputers: false,
     computerCount: 0,
@@ -29,76 +31,82 @@ export default function RoomsManagementPage() {
     fetchRooms();
   }, []);
 
+  // Fetches all rooms from the API, updates state, manages loading indicator, and shows a toast on failure.
   const fetchRooms = async () => {
     try {
       setIsLoading(true);
       const data = await roomsApi.getAll();
       setRooms(data);
     } catch (error) {
-      toast.error('Failed to load rooms');
+      toast.error("Failed to load rooms");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handles room creation: validates required fields, submits to API, manages loading state, resets form on success, refreshes room list, and shows errors
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.building) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setIsSubmitting(true);
       await roomsApi.create(formData);
-      toast.success('Room created successfully');
+      toast.success("Room created successfully");
       setShowAddModal(false);
       setFormData({
-        name: '',
-        building: '',
+        name: "",
+        building: "",
         floor: 1,
         capacity: 40,
-        type: 'lecture',
+        type: "lecture",
         hasProjector: false,
         hasComputers: false,
         computerCount: 0,
       });
       fetchRooms();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create room');
+      toast.error(error.response?.data?.message || "Failed to create room");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Deletes a room with confirmation, handles 404 and other API errors, shows toast feedback, and refreshes the room list.
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Are you sure you want to delete ${name}?`)) return;
 
     try {
       await roomsApi.delete(id);
-      toast.success('Room deleted successfully');
+      toast.success("Room deleted successfully");
       fetchRooms();
     } catch (error: any) {
       const status = error.response?.status;
       if (status === 404) {
-        toast.error('Room no longer exists. Refreshing list...');
+        toast.error("Room no longer exists. Refreshing list...");
         fetchRooms();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to delete room');
+        toast.error(error.response?.data?.message || "Failed to delete room");
       }
     }
   };
 
-  const buildings = Array.from(new Set(rooms.map((room) => room.building))).sort();
-  const roomTypes = ['lecture', 'lab', 'seminar', 'auditorium'];
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building)),
+  ).sort();
+  const roomTypes = ["lecture", "lab", "seminar", "auditorium"];
 
   const filteredRooms = rooms.filter((room) => {
     const matchesSearch =
       room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       room.building.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesBuilding = selectedBuilding === 'all' || room.building === selectedBuilding;
-    const matchesType = selectedType === 'all' || room.type === selectedType;
+    const matchesBuilding =
+      selectedBuilding === "all" || room.building === selectedBuilding;
+    const matchesType = selectedType === "all" || room.type === selectedType;
     return matchesSearch && matchesBuilding && matchesType;
   });
 
@@ -175,7 +183,7 @@ export default function RoomsManagementPage() {
       {/* Rooms Grid */}
       <div>
         <div className="text-sm font-medium text-black uppercase tracking-wide mb-6">
-          02. Rooms ({isLoading ? '...' : filteredRooms.length})
+          02. Rooms ({isLoading ? "..." : filteredRooms.length})
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-1 bg-gray-200 p-1">
           {isLoading ? (
@@ -190,8 +198,14 @@ export default function RoomsManagementPage() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex justify-between"><div className="h-4 w-20 bg-gray-200 rounded"></div><div className="h-4 w-12 bg-gray-200 rounded"></div></div>
-                    <div className="flex justify-between"><div className="h-4 w-20 bg-gray-200 rounded"></div><div className="h-4 w-16 bg-gray-200 rounded"></div></div>
+                    <div className="flex justify-between">
+                      <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-12 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                    </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <div className="h-3 w-20 bg-gray-200 rounded mb-2"></div>
@@ -208,10 +222,15 @@ export default function RoomsManagementPage() {
             </div>
           ) : (
             filteredRooms.map((room) => (
-              <div key={room.id} className="bg-white p-8 hover:bg-gray-50 transition-colors">
+              <div
+                key={room.id}
+                className="bg-white p-8 hover:bg-gray-50 transition-colors"
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="text-2xl font-bold text-black mb-1">{room.name}</div>
+                    <div className="text-2xl font-bold text-black mb-1">
+                      {room.name}
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Building2 className="h-4 w-4" />
                       {room.building}, Floor {room.floor}
@@ -231,7 +250,9 @@ export default function RoomsManagementPage() {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Capacity</span>
-                    <span className="text-black font-medium">{room.capacity} seats</span>
+                    <span className="text-black font-medium">
+                      {room.capacity} seats
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Type</span>
@@ -299,7 +320,9 @@ export default function RoomsManagementPage() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="A101"
                       required
@@ -314,7 +337,9 @@ export default function RoomsManagementPage() {
                     <input
                       type="text"
                       value={formData.building}
-                      onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, building: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="Main Building"
                       required
@@ -331,8 +356,16 @@ export default function RoomsManagementPage() {
                     <input
                       type="number"
                       min="1"
-                      value={formData.floor || ''}
-                      onChange={(e) => setFormData({ ...formData, floor: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                      value={formData.floor || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          floor:
+                            e.target.value === ""
+                              ? 0
+                              : parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="1"
                       required
@@ -347,8 +380,16 @@ export default function RoomsManagementPage() {
                     <input
                       type="number"
                       min="1"
-                      value={formData.capacity || ''}
-                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                      value={formData.capacity || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          capacity:
+                            e.target.value === ""
+                              ? 0
+                              : parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="40"
                       required
@@ -362,7 +403,9 @@ export default function RoomsManagementPage() {
                     </label>
                     <select
                       value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, type: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       required
                       disabled={isSubmitting}
@@ -388,11 +431,19 @@ export default function RoomsManagementPage() {
                       type="checkbox"
                       id="hasProjector"
                       checked={formData.hasProjector}
-                      onChange={(e) => setFormData({ ...formData, hasProjector: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          hasProjector: e.target.checked,
+                        })
+                      }
                       className="h-5 w-5 border-gray-300 text-black focus:ring-black"
                       disabled={isSubmitting}
                     />
-                    <label htmlFor="hasProjector" className="text-sm font-medium text-black">
+                    <label
+                      htmlFor="hasProjector"
+                      className="text-sm font-medium text-black"
+                    >
                       Projector
                     </label>
                   </div>
@@ -402,11 +453,19 @@ export default function RoomsManagementPage() {
                       type="checkbox"
                       id="hasComputers"
                       checked={formData.hasComputers}
-                      onChange={(e) => setFormData({ ...formData, hasComputers: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          hasComputers: e.target.checked,
+                        })
+                      }
                       className="h-5 w-5 border-gray-300 text-black focus:ring-black"
                       disabled={isSubmitting}
                     />
-                    <label htmlFor="hasComputers" className="text-sm font-medium text-black">
+                    <label
+                      htmlFor="hasComputers"
+                      className="text-sm font-medium text-black"
+                    >
                       Computers
                     </label>
                   </div>
@@ -418,8 +477,16 @@ export default function RoomsManagementPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.computerCount || ''}
-                      onChange={(e) => setFormData({ ...formData, computerCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                      value={formData.computerCount || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          computerCount:
+                            e.target.value === ""
+                              ? 0
+                              : parseInt(e.target.value),
+                        })
+                      }
                       className="w-full md:w-48 px-4 py-3 border border-gray-300 text-black focus:outline-none focus:border-black transition-colors"
                       placeholder="0"
                       disabled={isSubmitting || !formData.hasComputers}
@@ -434,7 +501,7 @@ export default function RoomsManagementPage() {
                   className="px-8 py-3 bg-black text-white hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Room'}
+                  {isSubmitting ? "Creating..." : "Create Room"}
                 </button>
                 <button
                   type="button"
